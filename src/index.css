@@ -1,0 +1,34 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html { font-family: -apple-system, 'PingFang SC', 'Microsoft YaHei', sans-serif; }
+  body { @apply bg-gray-50 text-gray-900; }
+  * { @apply box-border; }
+}
+
+@layer components {
+  .card { @apply bg-white rounded-2xl border border-gray-100 shadow-sm; }
+  .btn-primary { @apply px-4 py-2 bg-brand-500 text-white rounded-xl text-sm font-medium hover:bg-brand-600 transition-colors; }
+  .badge-green { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-green-50 text-green-700; }
+  .badge-red   { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-red-50 text-red-600; }
+  .badge-gray  { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-500; }
+  .badge-brand { @apply inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-brand-50 text-brand-600; }
+  .input { @apply w-full px-3 py-2 text-sm border border-gray-200 rounded-xl outline-none focus:ring-2 focus:ring-brand-500/30 focus:border-brand-400 transition; }
+  .sidebar-link { @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors cursor-pointer; }
+  .sidebar-link.active { @apply bg-brand-50 text-brand-600 hover:bg-brand-50; }
+}
+
+/* custom scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #d1d5db; }
+
+/* drawer slide-in */
+@keyframes slideIn {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+.drawer-enter { animation: slideIn 0.22s ease; }
