@@ -4,6 +4,7 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
+    "test": "node --test test/server.test.mjs",
     "dev": "node server/index.mjs --dev",
     "build": "tsc && vite build",
     "preview": "vite preview --port 4174",
