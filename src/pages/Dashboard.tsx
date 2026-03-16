@@ -1,12 +1,18 @@
-import { AlertTriangle, Bot, Loader2, MessagesSquare, Radio, RotateCcw, ShieldCheck, Wrench } from 'lucide-react';
+import { AlertTriangle, Bot, ChevronDown, ChevronRight, Loader2, MessagesSquare, Radio, RotateCcw, ShieldCheck, Wrench } from 'lucide-react';
+import { useState } from 'react';
 import PageHeader from '../components/ui/PageHeader';
 import { EmptyState, ErrorState, InlineBanner, LoadingState } from '../components/ui/AsyncState';
 import { useAppStore } from '../store/useAppStore';
 
-function Stat({ title, value, subtitle }: { title: string; value: string | number; subtitle: string }) {
+function Stat({ title, value, subtitle, statusDot }: { title: string; value: string | number; subtitle: string; statusDot?: 'green' | 'red' }) {
   return (
     <div className="rounded-xl border border-white/10 bg-white/5 p-5">
-      <p className="text-sm text-slate-400">{title}</p>
+      <div className="flex items-center gap-2">
+        <p className="text-sm text-slate-400">{title}</p>
+        {statusDot && (
+          <span className={`inline-block h-2 w-2 rounded-full ${statusDot === 'green' ? 'bg-emerald-400' : 'bg-red-400'}`} />
+        )}
+      </div>
       <p className="mt-2 text-3xl font-semibold text-white">{value}</p>
       <p className="mt-2 text-xs text-slate-500">{subtitle}</p>
     </div>
@@ -46,6 +52,8 @@ export default function Dashboard() {
     rollbackConfig,
   } = useAppStore();
 
+  const [diagExpanded, setDiagExpanded] = useState(false);
+
   if (loading && !overview) return <LoadingState description="正在读取 OpenClaw 总览、渠道、会话和任务状态..." />;
   if (error && !overview) {
     return <ErrorState description={error} action={<button onClick={() => void refresh()} className="rounded-lg border border-white/10 bg-white/5 px-4 py-2 text-sm text-white hover:bg-white/10">重试</button>} />;
@@ -80,11 +88,38 @@ export default function Dashboard() {
       {notice ? <InlineBanner tone={notice.tone}>{notice.message}</InlineBanner> : null}
 
       <div className="grid grid-cols-2 gap-4 xl:grid-cols-4">
-        <Stat title="Gateway" value={overview.gateway.reachable ? '在线' : '离线'} subtitle={`模式 ${overview.systemInfo.gatewayMode} · 绑定 ${overview.systemInfo.gatewayBind}`} />
+        <Stat title="Gateway" value={overview.gateway.reachable ? '在线' : '离线'} subtitle={`模式 ${overview.systemInfo.gatewayMode} · 绑定 ${overview.systemInfo.gatewayBind}`} statusDot={overview.gateway.reachable ? 'green' : 'red'} />
         <Stat title="渠道" value={overview.systemInfo.connectedChannels} subtitle={`已配置 ${overview.systemInfo.channelCount} 个`} />
         <Stat title="会话索引" value={overview.systemInfo.totalSessions} subtitle="来自 openclaw sessions --json" />
         <Stat title="可用技能" value={overview.systemInfo.skillCount} subtitle={`模型 ${overview.systemInfo.model}`} />
       </div>
+
+      {overview.diagnostics.cliWarnings && overview.diagnostics.cliWarnings.length > 0 && (
+        <div className="rounded-xl border border-amber-500/20 bg-amber-500/5 p-4">
+          <button
+            onClick={() => setDiagExpanded((v) => !v)}
+            className="flex w-full items-center justify-between text-left"
+          >
+            <div className="flex items-center gap-2">
+              {diagExpanded ? <ChevronDown size={14} className="text-amber-300" /> : <ChevronRight size={14} className="text-amber-300" />}
+              <AlertTriangle size={14} className="text-amber-300" />
+              <span className="text-sm font-medium text-amber-200">CLI 诊断</span>
+              <span className="rounded-full bg-amber-500/20 px-2 py-0.5 text-xs text-amber-300">{overview.diagnostics.cliWarnings.length}</span>
+            </div>
+            <span className="text-xs text-slate-500">{diagExpanded ? '收起' : '展开查看详情'}</span>
+          </button>
+          {diagExpanded && (
+            <div className="mt-3 space-y-2">
+              {overview.diagnostics.cliWarnings.map((w, i) => (
+                <div key={i} className="rounded-lg border border-amber-500/15 bg-amber-500/5 px-3 py-2">
+                  <span className="mr-2 font-mono text-xs font-semibold text-amber-300">{w.command}</span>
+                  <span className="text-xs text-slate-400">{w.message.length > 120 ? w.message.slice(0, 120) + '…' : w.message}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         <div className="space-y-4 rounded-xl border border-white/10 bg-white/5 p-5 xl:col-span-2">

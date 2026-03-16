@@ -103,6 +103,7 @@ export interface OverviewData {
   diagnostics: {
     fakeChannelsRisk: boolean;
     notes: string[];
+    cliWarnings: { command: string; message: string }[];
   };
 }
 
