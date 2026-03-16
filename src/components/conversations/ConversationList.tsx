@@ -13,6 +13,9 @@ const channelColors: Record<string, string> = {
   'QQ': 'text-indigo-400 bg-indigo-400/10',
 };
 
+// S2: This component currently has no search input. When search is added,
+// debounce the onChange handler (e.g., useDebounce hook or setTimeout 300ms)
+// before filtering conversations to avoid excessive re-renders.
 export default function ConversationList({ conversations, onSelect, selectedId }: ConversationListProps) {
   return (
     <div className="space-y-2">

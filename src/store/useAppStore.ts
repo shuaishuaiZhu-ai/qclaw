@@ -31,6 +31,11 @@ interface AppState {
   backupConfig: () => Promise<void>;
   rollbackConfig: () => Promise<void>;
   stopTask: (taskId: string) => Promise<void>;
+  // W3: Async action placeholders for future API integration
+  fetchStatus: () => Promise<void>;
+  fetchConversations: () => Promise<void>;
+  fetchSkills: () => Promise<void>;
+  fetchChannels: () => Promise<void>;
 }
 
 const initialActionLoading: Record<ActionName, boolean> = {
@@ -151,5 +156,18 @@ export const useAppStore = create<AppState>()((set, get) => ({
       scheduleNoticeDismiss(set);
       throw error;
     }
+  },
+  // W3: Placeholder stubs for future API integration
+  fetchStatus: async () => {
+    // TODO: fetch agent status from API (e.g., GET /api/status)
+  },
+  fetchConversations: async () => {
+    // TODO: fetch conversations from API (e.g., GET /api/conversations)
+  },
+  fetchSkills: async () => {
+    // TODO: fetch skills from API (e.g., GET /api/skills)
+  },
+  fetchChannels: async () => {
+    // TODO: fetch channels from API (e.g., GET /api/channels)
   },
 }));
