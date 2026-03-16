@@ -1,0 +1,410 @@
+{
+  "meta": {
+    "lastTouchedVersion": "2026.3.11",
+    "lastTouchedAt": "2026-03-16T02:51:55.629Z"
+  },
+  "wizard": {
+    "lastRunAt": "2026-03-11T11:34:50.380Z",
+    "lastRunVersion": "2026.3.8",
+    "lastRunCommand": "doctor",
+    "lastRunMode": "local"
+  },
+  "auth": {
+    "profiles": {
+      "anthropic:default": {
+        "provider": "anthropic",
+        "mode": "api_key"
+      },
+      "copilot-proxy:local": {
+        "provider": "copilot-proxy",
+        "mode": "token"
+      },
+      "github-copilot:github": {
+        "provider": "github-copilot",
+        "mode": "token"
+      }
+    }
+  },
+  "models": {
+    "providers": {
+      "copilot-proxy": {
+        "baseUrl": "http://localhost:3000/v1",
+        "apiKey": "n/a",
+        "api": "openai-completions",
+        "authHeader": false,
+        "models": [
+          {
+            "id": "gpt-5.2",
+            "name": "gpt-5.2",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "gpt-5.2-codex",
+            "name": "gpt-5.2-codex",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "gpt-5.1",
+            "name": "gpt-5.1",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "gpt-5.1-codex",
+            "name": "gpt-5.1-codex",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "gpt-5.1-codex-max",
+            "name": "gpt-5.1-codex-max",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "gpt-5-mini",
+            "name": "gpt-5-mini",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "claude-opus-4.6",
+            "name": "claude-opus-4.6",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "claude-opus-4.5",
+            "name": "claude-opus-4.5",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "claude-sonnet-4.5",
+            "name": "claude-sonnet-4.5",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "claude-haiku-4.5",
+            "name": "claude-haiku-4.5",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "gemini-3-pro",
+            "name": "gemini-3-pro",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "gemini-3-flash",
+            "name": "gemini-3-flash",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          },
+          {
+            "id": "grok-code-fast-1",
+            "name": "grok-code-fast-1",
+            "api": "openai-completions",
+            "reasoning": false,
+            "input": [
+              "text",
+              "image"
+            ],
+            "cost": {
+              "input": 0,
+              "output": 0,
+              "cacheRead": 0,
+              "cacheWrite": 0
+            },
+            "contextWindow": 128000,
+            "maxTokens": 8192
+          }
+        ]
+      }
+    }
+  },
+  "agents": {
+    "defaults": {
+      "model": {
+        "primary": "github-copilot/gpt-5.4"
+      },
+      "models": {
+        "anthropic/claude-sonnet-4-6": {
+          "params": {
+            "cacheRetention": "short"
+          }
+        },
+        "copilot-proxy/gpt-5.2": {},
+        "copilot-proxy/gpt-5.2-codex": {},
+        "copilot-proxy/gpt-5.1": {},
+        "copilot-proxy/gpt-5.1-codex": {},
+        "copilot-proxy/gpt-5.1-codex-max": {},
+        "copilot-proxy/gpt-5-mini": {},
+        "copilot-proxy/claude-opus-4.6": {},
+        "copilot-proxy/claude-opus-4.5": {},
+        "copilot-proxy/claude-sonnet-4.5": {},
+        "copilot-proxy/claude-haiku-4.5": {},
+        "copilot-proxy/gemini-3-pro": {},
+        "copilot-proxy/gemini-3-flash": {},
+        "copilot-proxy/grok-code-fast-1": {},
+        "github-copilot/claude-opus-4.6": {},
+        "github-copilot/gpt-5.4": {},
+        "github-copilot/claude-sonnet-4.6": {}
+      },
+      "workspace": "/Users/zhoumo1218/.openclaw/workspace",
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h"
+      },
+      "compaction": {
+        "mode": "safeguard"
+      },
+      "heartbeat": {
+        "every": "30m"
+      }
+    }
+  },
+  "tools": {
+    "profile": "coding",
+    "web": {
+      "search": {
+        "provider": "gemini"
+      }
+    }
+  },
+  "commands": {
+    "native": "auto",
+    "nativeSkills": "auto",
+    "restart": true,
+    "ownerDisplay": "raw"
+  },
+  "session": {
+    "dmScope": "per-channel-peer"
+  },
+  "hooks": {
+    "internal": {
+      "enabled": true,
+      "entries": {
+        "boot-md": {
+          "enabled": true
+        }
+      }
+    }
+  },
+  "channels": {
+    "qqbot": {
+      "enabled": true,
+      "allowFrom": [
+        "*"
+      ],
+      "appId": "1903149630",
+      "clientSecret": "NQUZekqx5DMWgr2ERes7Mcs9Rj2Mg1Mi"
+    },
+    "feishu": {
+      "enabled": true,
+      "connectionMode": "websocket",
+      "dmPolicy": "pairing",
+      "groupPolicy": "open",
+      "accounts": {
+        "default": {
+          "appId": "cli_a925027dc079dbd9",
+          "appSecret": "oE4qFZOYaPyf7D15DKPevg1wQ2Ubg1io"
+        }
+      }
+    }
+  },
+  "gateway": {
+    "port": 18889,
+    "mode": "local",
+    "bind": "loopback",
+    "auth": {
+      "mode": "token",
+      "token": "d4aa0e10ae48c64811ef95238b321ae80654a5da6b5768fd"
+    },
+    "tailscale": {
+      "mode": "off",
+      "resetOnExit": false
+    }
+  },
+  "skills": {
+    "install": {
+      "nodeManager": "npm"
+    }
+  },
+  "plugins": {
+    "entries": {
+      "qqbot": {
+        "enabled": true
+      },
+      "copilot-proxy": {
+        "enabled": true
+      },
+      "feishu": {
+        "enabled": true
+      }
+    },
+    "installs": {
+      "qqbot": {
+        "source": "npm",
+        "spec": "@sliverp/qqbot@latest",
+        "installPath": "/Users/zhoumo1218/.openclaw/extensions/qqbot",
+        "version": "1.5.4",
+        "resolvedName": "@sliverp/qqbot",
+        "resolvedVersion": "1.5.4",
+        "resolvedSpec": "@sliverp/qqbot@1.5.4",
+        "integrity": "sha512-O9T2mLVeWFUi5Q5TuVfWk/Bmrc1ZDjOfjNviKkHX93xk7+I0wndRY2ibrEvlYrINYVHGTh9uwodhTCcOj0AX7g==",
+        "shasum": "0230686834f45c850348cf5628e79c0cad0b5ee0",
+        "resolvedAt": "2026-03-12T06:16:09.870Z",
+        "installedAt": "2026-03-12T06:16:34.513Z"
+      }
+    }
+  }
+}

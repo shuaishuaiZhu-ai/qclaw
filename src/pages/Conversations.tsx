@@ -1,78 +1,69 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Search } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
-import ConversationList from '../components/conversations/ConversationList';
-import ConversationDrawer from '../components/conversations/ConversationDrawer';
-import type { Conversation } from '../types';
-
-const channels = ['全部', '飞书', '微信', 'Telegram', 'QQ'];
 
 export default function Conversations() {
-  const { conversations } = useAppStore();
+  const overview = useAppStore((state) => state.overview);
   const [search, setSearch] = useState('');
-  const [channelFilter, setChannelFilter] = useState('全部');
-  const [selected, setSelected] = useState<Conversation | null>(null);
+  const [channel, setChannel] = useState('全部');
 
-  const filtered = conversations.filter((c) => {
-    const matchChannel = channelFilter === '全部' || c.channel === channelFilter;
-    const matchSearch = !search || c.title.includes(search) || c.preview.includes(search);
-    return matchChannel && matchSearch;
+  const channelOptions = useMemo(() => ['全部', ...new Set((overview?.sessions || []).map((item) => item.channel))], [overview?.sessions]);
+
+  if (!overview) return null;
+
+  const sessions = overview.sessions.filter((item) => {
+    const matchSearch = !search || item.key.includes(search) || item.preview.includes(search);
+    const matchChannel = channel === '全部' || item.channel === channel;
+    return matchSearch && matchChannel;
   });
 
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="text-2xl font-bold text-white">对话历史</h1>
-        <p className="text-slate-400 text-sm mt-1">查看所有历史对话记录</p>
+        <h1 className="text-2xl font-bold text-white">真实会话索引</h1>
+        <p className="text-slate-400 text-sm mt-1">来自 openclaw sessions --json。当前版本不再展示假的消息正文。</p>
       </div>
 
-      {/* Filters */}
       <div className="flex items-center gap-3 flex-wrap">
-        {/* Search */}
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
+        <div className="relative flex-1 min-w-[220px] max-w-md">
           <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
-            type="text"
-            placeholder="搜索对话..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 focus:bg-white/8 transition-all"
+            placeholder="搜索 session key / model..."
+            className="w-full pl-9 pr-4 py-2 text-sm bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50"
           />
         </div>
-        {/* Channel filter */}
-        <div className="flex gap-1">
-          {channels.map((ch) => (
+        <div className="flex flex-wrap gap-1">
+          {channelOptions.map((item) => (
             <button
-              key={ch}
-              onClick={() => setChannelFilter(ch)}
-              className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
-                channelFilter === ch
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-400 hover:text-white bg-white/5 border border-white/10'
-              }`}
+              key={item}
+              onClick={() => setChannel(item)}
+              className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${channel === item ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30' : 'text-slate-400 hover:text-white bg-white/5 border border-white/10'}`}
             >
-              {ch}
+              {item}
             </button>
           ))}
         </div>
-        <span className="text-xs text-slate-500 ml-auto">{filtered.length} 条记录</span>
       </div>
 
-      {/* List */}
-      {filtered.length > 0 ? (
-        <ConversationList
-          conversations={filtered}
-          onSelect={setSelected}
-          selectedId={selected?.id}
-        />
-      ) : (
-        <div className="text-center py-16 text-slate-500">
-          <p>没有找到匹配的对话</p>
-        </div>
-      )}
-
-      {/* Drawer */}
-      <ConversationDrawer conversation={selected} onClose={() => setSelected(null)} />
+      <div className="space-y-3">
+        {sessions.map((session) => (
+          <div key={session.id} className="rounded-xl bg-white/5 border border-white/10 p-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <p className="text-sm text-white break-all">{session.key}</p>
+                <p className="text-xs text-slate-500 mt-1">{session.preview}</p>
+              </div>
+              <div className="text-right text-xs text-slate-500">
+                <div>{session.model}</div>
+                <div>{session.kind}</div>
+              </div>
+            </div>
+          </div>
+        ))}
+        {sessions.length === 0 && <div className="text-slate-500 py-10 text-center">没有匹配的会话</div>}
+      </div>
     </div>
   );
 }

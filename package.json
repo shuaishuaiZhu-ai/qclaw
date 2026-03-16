@@ -4,9 +4,10 @@
   "version": "1.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 5174",
+    "dev": "node server/index.mjs --dev",
     "build": "tsc && vite build",
-    "preview": "vite preview --port 4174"
+    "preview": "vite preview --port 4174",
+    "start": "NODE_ENV=production node server/index.mjs"
   },
   "dependencies": {
     "lucide-react": "^0.469.0",

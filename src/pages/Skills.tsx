@@ -1,71 +1,57 @@
-import { useState } from 'react';
-import { Search } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
-import SkillCard from '../components/skills/SkillCard';
-
-const categories = ['全部', '生产力', '开发工具', '搜索', '实用工具', '效率', '自动化', '内容处理', '文档处理'];
 
 export default function Skills() {
-  const { skills } = useAppStore();
+  const overview = useAppStore((state) => state.overview);
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('全部');
+  if (!overview) return null;
 
-  const filtered = skills.filter((s) => {
-    const matchCat = category === '全部' || s.category === category;
-    const matchSearch = !search || s.name.includes(search) || s.description.includes(search);
-    return matchCat && matchSearch;
-  });
-
-  const activeCount = skills.filter((s) => s.status === 'active').length;
+  const skills = useMemo(() => overview.skills.filter((skill) => {
+    const keyword = search.trim();
+    return !keyword || skill.name.includes(keyword) || skill.description.includes(keyword);
+  }), [overview.skills, search]);
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-2xl font-bold text-white">Skills 管理</h1>
-          <p className="text-slate-400 text-sm mt-1">已安装 {skills.length} 个 · 活跃 {activeCount} 个</p>
-        </div>
+      <div>
+        <h1 className="text-2xl font-bold text-white">技能与 Agent 能力</h1>
+        <p className="text-slate-400 text-sm mt-1">技能来自 openclaw skills list --json --eligible；Agent 来自 openclaw agents list --json。</p>
       </div>
 
-      {/* Filters */}
-      <div className="flex items-center gap-3 flex-wrap">
-        <div className="relative flex-1 min-w-[200px] max-w-sm">
-          <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="搜索 Skill..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-white/5 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50 transition-all"
-          />
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <div className="xl:col-span-2 rounded-xl bg-white/5 border border-white/10 p-5">
+          <div className="flex items-center justify-between gap-3 mb-4">
+            <h2 className="text-sm font-semibold text-slate-200">可用技能</h2>
+            <input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="搜索技能..." className="w-full max-w-xs px-3 py-2 text-sm bg-black/10 border border-white/10 rounded-lg text-white placeholder-slate-500 focus:outline-none focus:border-indigo-500/50" />
+          </div>
+          <div className="grid md:grid-cols-2 gap-3">
+            {skills.map((skill) => (
+              <div key={skill.name} className="rounded-lg bg-black/10 border border-white/5 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">{skill.emoji || '🧩'}</span>
+                  <p className="text-sm font-medium text-white">{skill.name}</p>
+                </div>
+                <p className="text-xs text-slate-400 mt-2 leading-5">{skill.description}</p>
+                <p className="text-[11px] text-slate-500 mt-2">{skill.source}</p>
+              </div>
+            ))}
+          </div>
         </div>
-        <div className="flex gap-1 flex-wrap">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => setCategory(cat)}
-              className={`px-3 py-1.5 text-xs rounded-lg font-medium transition-all ${
-                category === cat
-                  ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30'
-                  : 'text-slate-400 hover:text-white bg-white/5 border border-white/10'
-              }`}
-            >
-              {cat}
-            </button>
+
+        <div className="rounded-xl bg-white/5 border border-white/10 p-5 space-y-4">
+          <h2 className="text-sm font-semibold text-slate-200">Agent 配置</h2>
+          {overview.agents.configured.map((agent) => (
+            <div key={agent.id} className="rounded-lg bg-black/10 border border-white/5 px-4 py-3">
+              <p className="text-white font-medium">{agent.identityEmoji || '🤖'} {agent.identityName || agent.id}</p>
+              <p className="text-xs text-slate-400 mt-1">id: {agent.id}</p>
+              <p className="text-xs text-slate-500 mt-2 break-all">model: {agent.model || 'unknown'}</p>
+            </div>
           ))}
+          <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 px-4 py-3 text-sm text-amber-100 leading-6">
+            想要 PM / Dev / Test / Review 四角色并行，至少需要补齐更多 agent 配置或通过 ACP 线程会话调度。
+          </div>
         </div>
       </div>
-
-      {/* Grid */}
-      <div className="grid grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-        {filtered.map((skill) => (
-          <SkillCard key={skill.id} skill={skill} />
-        ))}
-      </div>
-
-      {filtered.length === 0 && (
-        <div className="text-center py-16 text-slate-500">没有找到匹配的 Skill</div>
-      )}
     </div>
   );
 }

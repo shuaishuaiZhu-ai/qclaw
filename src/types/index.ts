@@ -1,22 +1,129 @@
-export type AgentStatusType = 'online' | 'idle' | 'offline';
+export type AgentStatusType = 'online' | 'offline' | 'degraded';
 
-export interface AgentStatus {
-  status: AgentStatusType;
+export interface ChannelInfo {
+  id: string;
+  provider: string;
+  name: string;
+  accountId: string;
+  status: 'connected' | 'disconnected' | 'error';
+  configured: boolean;
+  running: boolean;
+  connected: boolean;
+  lastActive: number | string | null;
+  totalMessages: number;
+  todayMessages: number;
+  detail?: string | null;
+}
+
+export interface SessionInfo {
+  id: string;
+  key: string;
+  kind: string;
+  model: string;
+  updatedAt: number;
+  ageMs?: number;
+  channel: string;
+  peer: string;
+  tokenUsage?: number | null;
+  contextTokens?: number;
+  title: string;
+  preview: string;
+}
+
+export interface SkillInfo {
+  name: string;
+  description: string;
+  emoji?: string;
+  source: string;
+  eligible: boolean;
+  bundled?: boolean;
+}
+
+export interface AgentConfigInfo {
+  id: string;
+  identityName?: string;
+  identityEmoji?: string;
+  model?: string;
+  isDefault?: boolean;
+  workspace?: string;
+}
+
+export interface TaskInfo {
+  id: string;
+  label: string;
+  command: string;
+  status: 'running' | 'success' | 'failed' | 'stopped';
+  startedAt: string;
+  finishedAt: string | null;
+  exitCode: number | null;
+  pid?: number;
+  logs: string;
+  meta?: Record<string, unknown>;
+}
+
+export interface BackupInfo {
+  name: string;
+  path: string;
+  size: number;
+  createdAt: string;
+}
+
+export interface OverviewData {
+  generatedAt: string;
+  gateway: {
+    status: AgentStatusType;
+    reachable: boolean;
+    uptimeLabel: string;
+    overview: Record<string, unknown>;
+  };
+  agents: {
+    configured: AgentConfigInfo[];
+    count: number;
+    expectedRoles: string[];
+    readyForTeam: boolean;
+    guidance: string;
+  };
+  channels: ChannelInfo[];
+  sessions: SessionInfo[];
+  skills: SkillInfo[];
+  backups: BackupInfo[];
+  tasks: TaskInfo[];
+  systemInfo: {
+    workspace: string;
+    model: string;
+    configValid: boolean;
+    channelCount: number;
+    connectedChannels: number;
+    totalSessions: number;
+    skillCount: number;
+    openclawVersion: string;
+    gatewayMode: string;
+    gatewayBind: string;
+  };
+  diagnostics: {
+    fakeChannelsRisk: boolean;
+    notes: string[];
+  };
+}
+
+// Legacy view-model exports kept temporarily so older components still type-check.
+export type AgentStatus = {
+  status: 'online' | 'idle' | 'offline';
   uptime: string;
   totalConversations: number;
   todayConversations: number;
   activeSkills: number;
   activeChannels: number;
-}
+};
 
-export interface Message {
+export type Message = {
   id: string;
   role: 'user' | 'assistant';
   content: string;
   timestamp: string;
-}
+};
 
-export interface Conversation {
+export type Conversation = {
   id: string;
   title: string;
   channel: string;
@@ -26,9 +133,9 @@ export interface Conversation {
   timestamp: string;
   messageCount: number;
   messages: Message[];
-}
+};
 
-export interface Skill {
+export type Skill = {
   id: string;
   name: string;
   emoji: string;
@@ -39,9 +146,9 @@ export interface Skill {
   category: string;
   author: string;
   lastUsed: string;
-}
+};
 
-export interface Channel {
+export type Channel = {
   id: string;
   name: string;
   icon: string;
@@ -50,9 +157,9 @@ export interface Channel {
   totalMessages: number;
   lastActive: string;
   color: string;
-}
+};
 
-export interface SystemInfo {
+export type SystemInfo = {
   version: string;
   nodeVersion: string;
   platform: string;
@@ -62,10 +169,10 @@ export interface SystemInfo {
   diskUsage: number;
   model: string;
   workspace: string;
-}
+};
 
-export interface TrendData {
+export type TrendData = {
   date: string;
   conversations: number;
   messages: number;
-}
+};
