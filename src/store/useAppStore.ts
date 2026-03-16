@@ -4,6 +4,16 @@ import type { OverviewData, TaskInfo } from '../types';
 
 type ActionName = 'restartGateway' | 'autoRepair' | 'backupConfig' | 'rollbackConfig';
 
+let noticeDismissTimer: ReturnType<typeof setTimeout> | null = null;
+
+function scheduleNoticeDismiss(set: (partial: Partial<AppState>) => void) {
+  if (noticeDismissTimer !== null) clearTimeout(noticeDismissTimer);
+  noticeDismissTimer = setTimeout(() => {
+    set({ notice: null });
+    noticeDismissTimer = null;
+  }, 4000);
+}
+
 interface AppState {
   sidebarCollapsed: boolean;
   overview: OverviewData | null;
@@ -49,6 +59,7 @@ async function runAction<T>(
       actionLoading: initialActionLoading,
       notice: { tone: 'success', message: successMessage },
     });
+    scheduleNoticeDismiss(set);
     return result;
   } catch (error) {
     const message = error instanceof Error ? error.message : '操作失败';
@@ -56,6 +67,7 @@ async function runAction<T>(
       actionLoading: initialActionLoading,
       notice: { tone: 'error', message },
     });
+    scheduleNoticeDismiss(set);
     throw error;
   }
 }
@@ -90,14 +102,14 @@ export const useAppStore = create<AppState>()((set, get) => ({
     () => apiPost<TaskInfo>('/api/actions/restart-gateway'),
     set,
     get().refresh,
-    '已提交 Gateway 重启任务。',
+    '已提交重启任务，请在任务中心查看进度。',
   ),
   autoRepair: async () => runAction(
     'autoRepair',
     () => apiPost<TaskInfo>('/api/actions/auto-repair'),
     set,
     get().refresh,
-    '已启动自动修复任务，并自动创建回滚备份。',
+    '已提交自动修复任务，请在任务中心查看进度。',
   ),
   backupConfig: async () => {
     await runAction(
@@ -128,6 +140,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
         taskStopping: next,
         notice: { tone: 'success', message: '已发送停止任务请求。' },
       });
+      scheduleNoticeDismiss(set);
     } catch (error) {
       const next = { ...get().taskStopping };
       delete next[taskId];
@@ -135,6 +148,7 @@ export const useAppStore = create<AppState>()((set, get) => ({
         taskStopping: next,
         notice: { tone: 'error', message: error instanceof Error ? error.message : '停止任务失败' },
       });
+      scheduleNoticeDismiss(set);
       throw error;
     }
   },

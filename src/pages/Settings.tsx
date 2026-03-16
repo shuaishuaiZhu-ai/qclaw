@@ -1,4 +1,4 @@
-import { Square, SquareTerminal, ShieldAlert } from 'lucide-react';
+import { Square, SquareTerminal, ShieldAlert, InboxIcon } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 
 export default function Settings() {
@@ -36,7 +36,15 @@ export default function Settings() {
       <div className="rounded-xl bg-white/5 border border-white/10 p-5">
         <h2 className="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2"><SquareTerminal size={16} className="text-indigo-300" />任务中心</h2>
         <div className="space-y-3">
-          {overview.tasks.map((task) => (
+          {overview.tasks.length === 0 && (
+            <div className="flex flex-col items-center justify-center py-10 gap-3 text-slate-500">
+              <InboxIcon size={32} className="opacity-40" />
+              <p className="text-sm">暂无运维任务</p>
+            </div>
+          )}
+          {overview.tasks.map((task) => {
+            const logLines = task.logs ? task.logs.trim().split('\n').slice(-2).join('\n') : null;
+            return (
             <div key={task.id} className="rounded-lg bg-black/10 border border-white/5 p-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
@@ -54,10 +62,12 @@ export default function Settings() {
                   )}
                 </div>
               </div>
-              {task.logs && <pre className="mt-3 text-xs text-slate-400 bg-slate-950/70 rounded-lg p-3 overflow-x-auto whitespace-pre-wrap">{task.logs}</pre>}
+              {logLines && (
+                <pre className="mt-3 text-xs text-slate-400 bg-slate-950/70 rounded-lg p-3 overflow-x-auto whitespace-pre-wrap">{logLines}</pre>
+              )}
             </div>
-          ))}
-          {overview.tasks.length === 0 && <div className="text-sm text-slate-500">还没有运维任务。</div>}
+            );
+          })}
         </div>
       </div>
 

@@ -404,7 +404,22 @@ async function handleApi(req, res) {
 
   if (req.method === 'GET' && url.pathname === '/api/overview') {
     try {
-      const overview = await buildOverview();
+      // Return cached result if still fresh
+      if (overviewCache && Date.now() < overviewCache.expiresAt) {
+        return json(res, 200, { ok: true, data: overviewCache.data });
+      }
+      // Reuse inflight promise if already running
+      if (!overviewInflight) {
+        overviewInflight = buildOverview().then((data) => {
+          overviewCache = { data, expiresAt: Date.now() + 3000 };
+          overviewInflight = null;
+          return data;
+        }).catch((err) => {
+          overviewInflight = null;
+          throw err;
+        });
+      }
+      const overview = await overviewInflight;
       return json(res, 200, { ok: true, data: overview });
     } catch (error) {
       return sendError(res, 500, error.message);
@@ -514,6 +529,9 @@ async function createApp() {
         return sendError(res, 403, 'Forbidden path');
       }
       const filePath = existsSync(target) ? target : path.join(distDir, 'index.html');
+      const ext = path.extname(filePath).toLowerCase();
+      const contentType = MIME_TYPES[ext] || 'application/octet-stream';
+      res.setHeader('Content-Type', contentType);
       createReadStream(filePath).pipe(res);
     } catch (error) {
       sendError(res, 500, error.message);
@@ -523,6 +541,24 @@ async function createApp() {
   server.listen(port, () => {
     console.log(`[qclaw] ${isDev ? 'dev' : 'prod'} server running at http://127.0.0.1:${port}`);
   });
+
+  // --- Graceful shutdown (improvement #5) ---
+  function shutdown(signal) {
+    console.log(`[qclaw] received ${signal}, shutting down...`);
+    for (const task of tasks.values()) {
+      if (task.status === 'running' && task.stop) {
+        task.stop();
+      }
+    }
+    server.close(() => {
+      console.log('[qclaw] HTTP server closed.');
+      process.exit(0);
+    });
+    // Force exit after 5s if server doesn't close cleanly
+    setTimeout(() => process.exit(1), 5000).unref();
+  }
+  process.on('SIGTERM', () => shutdown('SIGTERM'));
+  process.on('SIGINT', () => shutdown('SIGINT'));
 }
 
 createApp();
