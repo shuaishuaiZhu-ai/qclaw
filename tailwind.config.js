@@ -14,8 +14,15 @@ export default {
           700: '#4338ca',
         },
       },
+      keyframes: {
+        'slide-in': {
+          '0%': { transform: 'translateX(100%)' },
+          '100%': { transform: 'translateX(0)' },
+        },
+      },
       animation: {
         'pulse-fast': 'pulse 1.2s cubic-bezier(0.4,0,0.6,1) infinite',
+        'slide-in': 'slide-in 0.25s ease-out',
       },
     },
   },
