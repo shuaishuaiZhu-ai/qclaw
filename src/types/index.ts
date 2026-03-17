@@ -15,6 +15,12 @@ export interface ChannelInfo {
   detail?: string | null;
 }
 
+export interface SessionMessage {
+  role: 'user' | 'assistant';
+  text: string;
+  timestamp?: string | number;
+}
+
 export interface SessionInfo {
   id: string;
   key: string;
@@ -28,6 +34,7 @@ export interface SessionInfo {
   contextTokens?: number;
   title: string;
   preview: string;
+  messages?: SessionMessage[];
 }
 
 export interface SkillInfo {

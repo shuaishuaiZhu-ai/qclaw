@@ -37,8 +37,8 @@ export default function Channels() {
                 <h3 className="text-lg font-semibold text-white">{channel.name}</h3>
                 <p className="text-xs text-slate-500">provider: {channel.provider} · account: {channel.accountId}</p>
               </div>
-              <span className={`px-2.5 py-1 rounded-full text-xs border ${channel.connected ? 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' : 'text-amber-300 border-amber-500/30 bg-amber-500/10'}`}>
-                {channel.connected ? '已连接' : channel.configured ? '未运行/未连接' : '未配置'}
+              <span className={`px-2.5 py-1 rounded-full text-xs border ${(channel.connected || channel.running) ? 'text-emerald-300 border-emerald-500/30 bg-emerald-500/10' : 'text-amber-300 border-amber-500/30 bg-amber-500/10'}`}>
+                {(channel.connected || channel.running) ? '已连接' : channel.configured ? '未运行/未连接' : '未配置'}
               </span>
             </div>
             <div className="grid grid-cols-2 gap-3 text-sm">

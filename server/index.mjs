@@ -304,23 +304,95 @@ async function buildOverview() {
     }))
   );
 
-  const sessionItems = (sessions?.sessions || []).map((session) => ({
-    id: session.sessionId,
-    key: session.key,
-    kind: session.kind,
-    model: session.model,
-    updatedAt: session.updatedAt,
-    ageMs: session.ageMs,
-    channel: session.key.split(':')[2] || 'main',
-    peer: session.key.split(':').slice(3).join(':'),
-    tokenUsage: session.totalTokens,
-    contextTokens: session.contextTokens,
-    title: session.key,
-    preview: `模型 ${session.model || 'unknown'} · ${session.kind}`,
+  const sessionsDir = path.join(process.env.HOME || '', '.openclaw', 'agents', 'main', 'sessions');
+  const conversationsDir = path.join(process.env.HOME || '', '.openclaw', 'workspace', 'conversations');
+  await fs.mkdir(conversationsDir, { recursive: true });
+
+  async function readSessionMessages(sessionId) {
+    const filePath = path.join(sessionsDir, `${sessionId}.jsonl`);
+    try {
+      const text = await fs.readFile(filePath, 'utf8');
+      const lines = text.trim().split('\n').filter(Boolean);
+      const messages = [];
+      for (const line of lines) {
+        try {
+          const entry = JSON.parse(line);
+          const msg = entry.message;
+          if (!msg) continue;
+          if (msg.role === 'user' || msg.role === 'assistant') {
+            let text = '';
+            if (typeof msg.content === 'string') {
+              text = msg.content;
+            } else if (Array.isArray(msg.content)) {
+              text = msg.content.filter(c => c.type === 'text').map(c => c.text).join(' ');
+            }
+            if (text.trim()) {
+              messages.push({ role: msg.role, text: text.slice(0, 200), timestamp: entry.timestamp });
+            }
+          }
+        } catch {}
+      }
+      return messages.slice(-20);
+    } catch {
+      return [];
+    }
+  }
+
+  const sessionList = sessions?.sessions || [];
+  const sessionMessagesResults = await Promise.allSettled(
+    sessionList.map(s => readSessionMessages(s.sessionId))
+  );
+
+  const sessionItems = await Promise.all(sessionList.map(async (session, i) => {
+    const messages = sessionMessagesResults[i].status === 'fulfilled' ? sessionMessagesResults[i].value : [];
+    const channel = session.key.split(':')[2] || 'main';
+    const item = {
+      id: session.sessionId,
+      key: session.key,
+      kind: session.kind,
+      model: session.model,
+      updatedAt: session.updatedAt,
+      ageMs: session.ageMs,
+      channel,
+      peer: session.key.split(':').slice(3).join(':'),
+      tokenUsage: session.totalTokens,
+      contextTokens: session.contextTokens,
+      title: session.key,
+      preview: messages.length > 0 ? messages[messages.length - 1].text.slice(0, 80) : `模型 ${session.model || 'unknown'} · ${session.kind}`,
+      messages,
+    };
+    // Save to conversations dir
+    try {
+      await fs.writeFile(
+        path.join(conversationsDir, `${channel}_${session.sessionId}.json`),
+        JSON.stringify({ sessionId: session.sessionId, key: session.key, channel, messages, savedAt: Date.now() }, null, 2),
+        'utf8'
+      );
+    } catch {}
+    return item;
   }));
 
+  // Keep only 20 most recent per channel
+  try {
+    const files = await fs.readdir(conversationsDir);
+    const channelMap = {};
+    for (const f of files) {
+      if (!f.endsWith('.json')) continue;
+      const ch = f.split('_')[0];
+      if (!channelMap[ch]) channelMap[ch] = [];
+      const stat = await fs.stat(path.join(conversationsDir, f));
+      channelMap[ch].push({ name: f, mtime: stat.mtimeMs });
+    }
+    for (const ch of Object.keys(channelMap)) {
+      const sorted = channelMap[ch].sort((a, b) => b.mtime - a.mtime);
+      for (const old of sorted.slice(20)) {
+        await fs.unlink(path.join(conversationsDir, old.name)).catch(() => {});
+      }
+    }
+  } catch {}
+
   const backupFiles = await listBackups();
-  const connectedChannels = normalizedChannels.filter((item) => item.connected).length;
+  const connectedChannels = normalizedChannels.filter((item) => item.connected || item.running).length;
   const agentCount = Array.isArray(agents) ? agents.length : 0;
   const eligibleSkills = skills?.skills || [];
   const gatewayReachable = gatewayStatus?.probe?.ok ?? gatewayStatus?.health?.ok ?? true;
@@ -512,6 +584,72 @@ async function handleApi(req, res) {
     if (!task) return sendError(res, 404, '任务不存在');
     if (!task.stop()) return sendError(res, 400, '任务当前不可停止');
     return json(res, 200, { ok: true, data: stripTask(task) });
+  }
+
+  // ── Agent management APIs ────────────────────────────────────────────────
+  if (req.method === 'GET' && url.pathname === '/api/agents') {
+    try {
+      const config = await fs.readFile(openclawConfigPath, 'utf8').then(JSON.parse).catch(() => ({}));
+      const agentsConfig = config.agents || {};
+      const defaultAgent = agentsConfig.default || 'main';
+      const list = agentsConfig.list || [];
+      return json(res, 200, { ok: true, data: { default: defaultAgent, list } });
+    } catch (error) {
+      return sendError(res, 500, error.message);
+    }
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/agents/default') {
+    try {
+      const body = await readBody(req);
+      const { agentId } = body;
+      if (!agentId) return sendError(res, 400, 'agentId 不能为空');
+      const configText = await fs.readFile(openclawConfigPath, 'utf8');
+      const config = JSON.parse(configText);
+      if (!config.agents) return sendError(res, 400, '配置中没有 agents 字段');
+      const list = config.agents.list || [];
+      if (!list.find((a) => a.id === agentId)) {
+        return sendError(res, 400, `Agent "${agentId}" 不在 agents.list 中`);
+      }
+      config.agents.default = agentId;
+      await fs.writeFile(openclawConfigPath, JSON.stringify(config, null, 2), 'utf8');
+      return json(res, 200, { ok: true, message: `默认 agent 已更新为 ${agentId}` });
+    } catch (error) {
+      return sendError(res, 500, error.message);
+    }
+  }
+
+  // ── Skills management APIs ───────────────────────────────────────────────
+  if (req.method === 'DELETE' && url.pathname.startsWith('/api/skills/')) {
+    try {
+      const skillName = decodeURIComponent(url.pathname.slice('/api/skills/'.length));
+      if (!skillName || skillName.includes('/') || skillName.includes('..')) {
+        return sendError(res, 400, '无效的技能名称');
+      }
+      const skillsDir = path.join(process.env.HOME || '', '.agents', 'skills');
+      const skillPath = path.join(skillsDir, skillName);
+      if (!skillPath.startsWith(skillsDir + path.sep)) return sendError(res, 400, '路径不安全');
+      await fs.rm(skillPath, { recursive: true, force: true });
+      return json(res, 200, { ok: true, message: `技能 ${skillName} 已卸载` });
+    } catch (error) {
+      return sendError(res, 500, error.message);
+    }
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/skills/install') {
+    try {
+      const body = await readBody(req);
+      const { name, skillmdContent } = body;
+      if (!name || name.includes('/') || name.includes('..')) return sendError(res, 400, '无效的技能名称');
+      if (!skillmdContent) return sendError(res, 400, 'skillmdContent 不能为空');
+      const skillsDir = path.join(process.env.HOME || '', '.agents', 'skills');
+      const skillPath = path.join(skillsDir, name);
+      await fs.mkdir(skillPath, { recursive: true });
+      await fs.writeFile(path.join(skillPath, 'SKILL.md'), skillmdContent, 'utf8');
+      return json(res, 200, { ok: true, message: `技能 ${name} 安装成功` });
+    } catch (error) {
+      return sendError(res, 500, error.message);
+    }
   }
 
   return sendError(res, 404, `Unknown API endpoint: ${url.pathname}`);

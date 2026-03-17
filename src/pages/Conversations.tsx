@@ -144,6 +144,30 @@ function SessionDrawer({ session, onClose }: { session: SessionInfo; onClose: ()
               <span className="text-slate-400 text-xs leading-relaxed">{session.preview}</span>
             </DetailRow>
           )}
+          <DetailRow label="对话记录">
+            {session.messages && session.messages.length > 0 ? (
+              <div className="space-y-3 mt-1">
+                {session.messages.map((msg, i) => (
+                  <div key={i} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                    <div className={`max-w-[85%] rounded-xl px-3 py-2 text-xs leading-relaxed ${
+                      msg.role === 'user'
+                        ? 'bg-indigo-500/20 text-indigo-100 rounded-br-sm'
+                        : 'bg-white/5 text-slate-200 rounded-bl-sm'
+                    }`}>
+                      <p className="whitespace-pre-wrap break-words">{msg.text}</p>
+                      {msg.timestamp && (
+                        <p className="text-[10px] text-slate-500 mt-1 text-right">
+                          {new Date(msg.timestamp).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="text-slate-500 text-xs">暂无对话记录</span>
+            )}
+          </DetailRow>
         </div>
       </div>
     </>

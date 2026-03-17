@@ -1,112 +1,127 @@
-# Qclaw — OpenClaw 管家控制台
+# qclaw — OpenClaw 可视化管理面板
 
-A local ops dashboard that reads live data from the OpenClaw CLI/gateway, giving you real-time visibility and control over your OpenClaw deployment — all from a clean web UI.
-
----
-
-## What It Is
-
-Qclaw is a **local-only operations console** for OpenClaw. It talks to the OpenClaw CLI and gateway in real time, surfaces live status for your gateway, channels, sessions, and installed skills, and lets you take action (restart, repair, backup, rollback, stop tasks) without touching the terminal.
+> 为 [OpenClaw](https://openclaw.ai) 打造的轻量 Web 管理界面，帮助你实时查看 Agent 状态、会话历史、渠道连接情况、技能管理，一切尽在掌控。
 
 ---
 
-## Key Features
+## ✨ 功能特性
 
-- **Live status panel** — gateway health, active channels, running sessions, installed skills
-- **Supported channels** — QQ Bot + Feishu (WeChat and Telegram are not supported)
-- **Action buttons** — restart gateway, repair broken installs, backup config, rollback to previous version, stop a running task
-- **8-second auto-poll** — the UI refreshes every 8 s so you always see current state without manual refresh
-- **Zero external dependencies** — everything runs locally; no cloud, no telemetry
+### 📊 Dashboard
+- 实时展示 Gateway 状态、已连接渠道数、活跃 Agent 数、可用技能数
+- 趋势图、最近动作记录
 
----
+### 💬 会话管理
+- 列出所有活跃 session，支持按渠道筛选、关键词搜索
+- 点击 session 查看详情：model、token 用量、最近20条对话内容
+- 对话内容自动保存到本地 `workspace/conversations/`
 
-## Architecture
+### 🔌 渠道状态
+- 实时显示 Feishu、QQBot 等渠道连接状态
+- 显示 configured / running / connected 三层状态
 
-```
-Browser (Vite + React + TypeScript + Zustand)
-        │  HTTP (localhost)
-        ▼
-server/index.mjs  ← Node.js BFF (Backend-for-Frontend)
-        │  child_process / stdio
-        ▼
-openclaw CLI  ←→  OpenClaw Gateway
-```
+### 🧩 技能管理
+- 浏览所有已安装技能，支持关键词搜索
+- **一键卸载**技能（hover 出现删除按钮）
+- **从 ClawHub 安装**：粘贴 SKILL.md 内容即可安装
 
-| Layer | Stack |
-|---|---|
-| Frontend | Vite · React · TypeScript · Zustand |
-| BFF | Node.js (ESM) · `server/index.mjs` |
-| Data source | `openclaw` CLI + gateway REST/stdio |
+### 🤖 Agent 管理
+- 查看所有已配置 agent 及其 model
+- **一键切换默认 Agent**（无需手动编辑配置文件）
 
-The BFF spawns `openclaw` subcommands to collect live data and proxies action requests (restart, backup, etc.) back to the CLI. In dev mode the BFF also serves Vite's HMR middleware so you only need one process.
-
----
-
-## Requirements
-
-- **Node.js 18+**
-- **`openclaw` CLI** installed and available in `PATH`
-- OpenClaw configured and (optionally) the gateway running
+### ⚙️ 设置与运维
+- 查看/编辑 OpenClaw 配置
+- 配置备份与一键回滚
+- Gateway 重启、自动修复
 
 ---
 
-## Running
+## 🚀 快速启动
 
-### Development
+### 依赖
+- Node.js v18+
+- OpenClaw CLI（已配置）
 
+### 本地开发
 ```bash
 npm install
 npm run dev
+# 打开 http://localhost:5174
 ```
 
-This starts `server/index.mjs --dev`, which spins up the Node.js BFF **and** Vite's dev middleware together. Open [http://localhost:5173](http://localhost:5173).
-
-### Production
-
+### 生产部署
 ```bash
-npm run build   # Vite builds static assets into dist/
-npm start       # Starts server/index.mjs (serves dist/ as static files)
+./start.sh
+# 自动构建 + 启动 prod server (port 4174) + ngrok 隧道
 ```
 
-Open [http://localhost:3000](http://localhost:3000) (or the port printed in the terminal).
+**公网地址（固定）**: `https://guilefully-unclarifying-shirly.ngrok-free.dev`
 
 ---
 
-## Channels Shown
+## 🏗️ 技术栈
 
-| Channel | Status |
+| 层 | 技术 |
 |---|---|
-| QQ Bot | ✅ Supported |
-| Feishu | ✅ Supported |
-| WeChat | ❌ Not supported |
-| Telegram | ❌ Not supported |
+| 前端 | React 18 + TypeScript + Vite + Tailwind CSS |
+| 后端 | Node.js HTTP server（原生，无框架） |
+| 状态管理 | Zustand |
+| 图表 | Recharts |
+| 隧道 | ngrok（固定域名）|
 
 ---
 
-## Known Limitations
-
-- **`openclaw` must be in PATH** — the BFF calls the CLI via `child_process`; if it's missing or misconfigured, all live data will fail to load.
-- **No authentication on the local server** — the BFF binds to `localhost` only and has no login/token mechanism. Do not expose the port externally.
-- **Backups** are stored in `.qclaw/backups/` relative to your home directory. Disk space is not managed automatically.
-- **Read-only for some fields** — session transcripts and detailed logs require the gateway to be running and reachable.
-
----
-
-## Project Structure
+## 📁 目录结构
 
 ```
 qclaw/
-├── src/               # React + TypeScript frontend
+├── src/
+│   ├── pages/          # 页面：Dashboard, Conversations, Channels, Skills, Settings
+│   ├── components/     # 复用组件
+│   ├── store/          # Zustand store
+│   └── lib/            # API 工具
 ├── server/
-│   └── index.mjs      # Node.js BFF
-├── public/
-├── vite.config.ts
-├── package.json
-└── README.md
+│   └── index.mjs       # 后端 API + 静态服务（单文件）
+├── start.sh            # 一键启动脚本
+└── .qclaw/             # 运行时目录（PID、日志、tunnel）
 ```
 
 ---
 
-## License
+## 🔌 API 文档
 
-Internal tool — not published to npm.
+| Method | Path | 说明 |
+|--------|------|------|
+| GET | `/api/overview` | 系统全览数据 |
+| GET | `/api/agents` | Agent 列表及默认配置 |
+| POST | `/api/agents/default` | 更改默认 Agent |
+| DELETE | `/api/skills/:name` | 卸载技能 |
+| POST | `/api/skills/install` | 安装技能（传入 SKILL.md 内容）|
+| POST | `/api/actions/backup-config` | 备份配置 |
+| POST | `/api/actions/restart-gateway` | 重启 Gateway |
+| POST | `/api/actions/rollback-config` | 回滚配置 |
+| POST | `/api/tasks/clear-finished` | 清除已完成任务 |
+| POST | `/api/tasks/:id/stop` | 停止运行中任务 |
+
+---
+
+## 🛠️ 开发说明
+
+### 关键设计决策
+- **单文件后端**：`server/index.mjs` 使用 Node.js 原生 http 模块，零依赖，便于部署
+- **isDev 判断**：仅通过 `--dev` CLI 参数，不依赖 `NODE_ENV`
+- **渠道状态判断**：`running || connected` 两个条件任一满足即为"已连接"（兼容 Feishu 无 connected 字段）
+- **会话内容**：读取 `~/.openclaw/agents/main/sessions/*.jsonl`，保存最近20条
+
+---
+
+## 📝 更新日志
+
+### v1.1.0
+- 修复飞书渠道显示"未运行/未连接"的 bug
+- 会话页展示最近20条对话内容，保存到本地
+- Skills 页支持卸载和安装技能
+- Agent 配置支持更改默认 Agent
+- 切换隧道为 ngrok 固定域名
+
+### v1.0.0
+- 初始版本：Dashboard、会话索引、渠道状态、技能列表、Settings
