@@ -1,9 +1,23 @@
-import { Square, SquareTerminal, ShieldAlert, InboxIcon } from 'lucide-react';
+import { Square, SquareTerminal, ShieldAlert, InboxIcon, Loader2, Trash2 } from 'lucide-react';
+import { useState } from 'react';
 import { useAppStore } from '../store/useAppStore';
 
 export default function Settings() {
-  const { overview, stopTask } = useAppStore();
+  const { overview, stopTask, clearFinishedTasks } = useAppStore();
+  const [clearing, setClearing] = useState(false);
+
   if (!overview) return null;
+
+  const hasFinished = overview.tasks.some((t) => t.status !== 'running');
+
+  async function handleClearFinished() {
+    setClearing(true);
+    try {
+      await clearFinishedTasks();
+    } finally {
+      setClearing(false);
+    }
+  }
 
   return (
     <div className="space-y-6 max-w-5xl">
@@ -34,7 +48,19 @@ export default function Settings() {
       </div>
 
       <div className="rounded-xl bg-white/5 border border-white/10 p-5">
-        <h2 className="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2"><SquareTerminal size={16} className="text-indigo-300" />任务中心</h2>
+        <h2 className="text-sm font-semibold text-slate-200 mb-4 flex items-center gap-2">
+            <SquareTerminal size={16} className="text-indigo-300" />任务中心
+            {hasFinished && (
+              <button
+                onClick={() => void handleClearFinished()}
+                disabled={clearing}
+                className="ml-auto inline-flex items-center gap-1 rounded-lg border border-white/10 bg-white/5 px-2.5 py-1 text-xs text-slate-300 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {clearing ? <Loader2 size={12} className="animate-spin" /> : <Trash2 size={12} />}
+                清除已完成
+              </button>
+            )}
+          </h2>
         <div className="space-y-3">
           {overview.tasks.length === 0 && (
             <div className="flex flex-col items-center justify-center py-10 gap-3 text-slate-500">

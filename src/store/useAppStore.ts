@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { apiGet, apiPost } from '../lib/api';
 import type { OverviewData, TaskInfo } from '../types';
 
-type ActionName = 'restartGateway' | 'autoRepair' | 'backupConfig' | 'rollbackConfig';
+type ActionName = 'restartGateway' | 'autoRepair' | 'backupConfig' | 'rollbackConfig' | 'clearFinishedTasks';
 
 let noticeDismissTimer: ReturnType<typeof setTimeout> | null = null;
 
@@ -31,6 +31,7 @@ interface AppState {
   backupConfig: () => Promise<void>;
   rollbackConfig: () => Promise<void>;
   stopTask: (taskId: string) => Promise<void>;
+  clearFinishedTasks: () => Promise<void>;
   // W3: Async action placeholders for future API integration
   fetchStatus: () => Promise<void>;
   fetchConversations: () => Promise<void>;
@@ -43,6 +44,7 @@ const initialActionLoading: Record<ActionName, boolean> = {
   autoRepair: false,
   backupConfig: false,
   rollbackConfig: false,
+  clearFinishedTasks: false,
 };
 
 async function runAction<T>(
@@ -132,6 +134,15 @@ export const useAppStore = create<AppState>()((set, get) => ({
       set,
       get().refresh,
       '已提交回滚任务，并将自动重启 Gateway。',
+    );
+  },
+  clearFinishedTasks: async () => {
+    await runAction(
+      'clearFinishedTasks',
+      () => apiPost('/api/tasks/clear-finished'),
+      set,
+      get().refresh,
+      '已清除已完成任务。',
     );
   },
   stopTask: async (taskId: string) => {

@@ -487,6 +487,21 @@ async function handleApi(req, res) {
     }
   }
 
+  if (url.pathname === '/api/tasks/clear-finished' && req.method !== 'POST') {
+    return methodNotAllowed(res, ['POST']);
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/tasks/clear-finished') {
+    let cleared = 0;
+    for (const [id, task] of tasks.entries()) {
+      if (task.status !== 'running') {
+        tasks.delete(id);
+        cleared++;
+      }
+    }
+    return json(res, 200, { ok: true, cleared });
+  }
+
   if (/^\/api\/tasks\/[^/]+\/stop$/.test(url.pathname) && req.method !== 'POST') {
     return methodNotAllowed(res, ['POST']);
   }

@@ -1,4 +1,4 @@
-import { AlertTriangle, Bot, ChevronDown, ChevronRight, Loader2, MessagesSquare, Radio, RotateCcw, ShieldCheck, Wrench } from 'lucide-react';
+import { AlertTriangle, Bot, ChevronDown, ChevronRight, Loader2, MessagesSquare, Radio, RotateCcw, ShieldCheck, Square, Wrench } from 'lucide-react';
 import { useState } from 'react';
 import PageHeader from '../components/ui/PageHeader';
 import { EmptyState, ErrorState, InlineBanner, LoadingState } from '../components/ui/AsyncState';
@@ -45,11 +45,13 @@ export default function Dashboard() {
     error,
     notice,
     actionLoading,
+    taskStopping,
     refresh,
     restartGateway,
     autoRepair,
     backupConfig,
     rollbackConfig,
+    stopTask,
   } = useAppStore();
 
   const [diagExpanded, setDiagExpanded] = useState(false);
@@ -178,6 +180,41 @@ export default function Dashboard() {
           <div className="text-xs text-slate-500">当前检测到 {overview.agents.count} 个本地 agent。</div>
         </div>
       </div>
+
+      {overview.tasks.filter((t) => t.status === 'running').length > 0 && (
+        <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/5 p-5">
+          <h2 className="mb-4 flex items-center gap-2 text-sm font-semibold text-indigo-200">
+            <Loader2 size={14} className="animate-spin text-indigo-400" />
+            运行中任务
+            <span className="rounded-full bg-indigo-500/20 px-2 py-0.5 text-xs text-indigo-300">{overview.tasks.filter((t) => t.status === 'running').length}</span>
+          </h2>
+          <div className="space-y-3">
+            {overview.tasks.filter((t) => t.status === 'running').map((task) => {
+              const elapsed = Math.floor((Date.now() - new Date(task.startedAt).getTime()) / 1000);
+              const elapsedStr = elapsed < 60 ? `${elapsed}s` : elapsed < 3600 ? `${Math.floor(elapsed / 60)}m${elapsed % 60}s` : `${Math.floor(elapsed / 3600)}h${Math.floor((elapsed % 3600) / 60)}m`;
+              return (
+                <div key={task.id} className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-indigo-500/15 bg-black/20 px-4 py-3">
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium text-white">{task.label}</p>
+                    <p className="mt-1 truncate text-xs text-slate-400">{task.command}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-xs text-slate-500">已运行 {elapsedStr}</span>
+                    <button
+                      onClick={() => void stopTask(task.id)}
+                      disabled={taskStopping[task.id]}
+                      className="inline-flex items-center gap-1 rounded-lg border border-red-500/30 bg-red-500/15 px-3 py-1.5 text-xs text-red-200 hover:bg-red-500/25 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {taskStopping[task.id] ? <Loader2 size={12} className="animate-spin" /> : <Square size={12} />}
+                      停止
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
         <div className="rounded-xl border border-white/10 bg-white/5 p-5">
