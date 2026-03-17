@@ -13,7 +13,7 @@ const rootDir = path.resolve(__dirname, '..');
 const distDir = path.join(rootDir, 'dist');
 const backupDir = path.join(rootDir, '.qclaw', 'backups');
 const openclawConfigPath = path.join(process.env.HOME || '', '.openclaw', 'openclaw.json');
-const isDev = process.argv.includes('--dev') || process.env.NODE_ENV !== 'production';
+const isDev = process.argv.includes('--dev');
 const port = Number(process.env.PORT || (isDev ? 5174 : 4174));
 
 const tasks = new Map();
