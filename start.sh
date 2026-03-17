@@ -27,6 +27,7 @@ stop() {
   # 兜底 kill 残留进程
   pkill -f 'server/index.mjs' 2>/dev/null || true
   pkill -f 'cloudflared tunnel' 2>/dev/null || true
+  pkill -f 'ngrok http' 2>/dev/null || true
   echo "✅ 已停止"
   exit 0
 }
@@ -36,6 +37,7 @@ if [ "$1" = "stop" ]; then stop; fi
 # 先停掉旧实例
 pkill -f 'server/index.mjs' 2>/dev/null || true
 pkill -f 'cloudflared tunnel' 2>/dev/null || true
+pkill -f 'ngrok http' 2>/dev/null || true
 sleep 1
 
 echo "📦 构建前端..."
@@ -43,7 +45,7 @@ cd "$SCRIPT_DIR"
 npm run build
 
 echo "🚀 启动 prod server (port $PORT)..."
-node server/index.mjs >> "$LOG_FILE" 2>&1 &
+nohup node server/index.mjs >> "$LOG_FILE" 2>&1 < /dev/null &
 echo $! > "$PID_FILE"
 sleep 2
 
@@ -58,7 +60,7 @@ fi
 NGROK_DOMAIN="guilefully-unclarifying-shirly.ngrok-free.dev"
 
 echo "🌐 启动 ngrok Tunnel (固定域名: $NGROK_DOMAIN)..."
-ngrok http "$PORT" --domain="$NGROK_DOMAIN" --log=stdout >> "$TUNNEL_LOG" 2>&1 &
+nohup ngrok http "$PORT" --domain="$NGROK_DOMAIN" --log=stdout >> "$TUNNEL_LOG" 2>&1 < /dev/null &
 echo $! > "$TUNNEL_PID_FILE"
 
 echo "  等待 tunnel 建立..."

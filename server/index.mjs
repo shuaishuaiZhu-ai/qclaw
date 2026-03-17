@@ -84,6 +84,33 @@ async function ensureBackupDir() {
   await fs.mkdir(backupDir, { recursive: true });
 }
 
+async function syncAgentSessionModels(agentId, model) {
+  const home = process.env.HOME || '';
+  const sessionsPath = path.join(home, '.openclaw', 'agents', agentId, 'sessions', 'sessions.json');
+  if (!existsSync(sessionsPath)) {
+    return { updated: 0, path: sessionsPath, found: false };
+  }
+
+  const text = await fs.readFile(sessionsPath, 'utf8');
+  const sessions = JSON.parse(text || '{}');
+  let updated = 0;
+
+  for (const [key, value] of Object.entries(sessions)) {
+    if (!key.startsWith(`agent:${agentId}:`)) continue;
+    if (!value || typeof value !== 'object') continue;
+    value.model = model;
+    value.systemSent = false;
+    value.updatedAt = Date.now();
+    updated += 1;
+  }
+
+  if (updated > 0) {
+    await fs.writeFile(sessionsPath, JSON.stringify(sessions, null, 2), 'utf8');
+  }
+
+  return { updated, path: sessionsPath, found: true };
+}
+
 function extractJsonPayload(raw) {
   const text = stripAnsi(raw).replace(/^\uFEFF/, '').trim();
   if (!text) return '';
@@ -628,7 +655,31 @@ async function handleApi(req, res) {
         config.agents.defaults.model.primary = model;
       }
       await fs.writeFile(openclawConfigPath, JSON.stringify(config, null, 2), 'utf8');
-      return json(res, 200, { ok: true, message: `Agent "${agentId}" 模型已更新为 ${model}` });
+
+      let sessionSync = null;
+      let restartTask = null;
+      if (agentId === 'main') {
+        sessionSync = await syncAgentSessionModels('main', model);
+        restartTask = makeTask('openclaw', ['gateway', 'restart'], '模型切换后自动重启 Gateway', {
+          kind: 'restart-gateway-after-model-change',
+          agentId,
+          model,
+          sessionSync,
+        });
+      }
+
+      return json(res, 200, {
+        ok: true,
+        message: agentId === 'main'
+          ? `Agent "${agentId}" 模型已更新为 ${model}，并已同步 main sessions 缓存 + 自动重启 Gateway`
+          : `Agent "${agentId}" 模型已更新为 ${model}`,
+        data: {
+          agentId,
+          model,
+          sessionSync,
+          restartTask: restartTask ? stripTask(restartTask) : null,
+        },
+      });
     } catch (error) {
       return sendError(res, 500, error.message);
     }
