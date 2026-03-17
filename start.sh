@@ -55,25 +55,26 @@ else
   exit 1
 fi
 
-echo "🌐 启动 Cloudflare Tunnel..."
-cloudflared tunnel --url "http://127.0.0.1:$PORT" >> "$TUNNEL_LOG" 2>&1 &
+NGROK_DOMAIN="guilefully-unclarifying-shirly.ngrok-free.dev"
+
+echo "🌐 启动 ngrok Tunnel (固定域名: $NGROK_DOMAIN)..."
+ngrok http "$PORT" --domain="$NGROK_DOMAIN" --log=stdout >> "$TUNNEL_LOG" 2>&1 &
 echo $! > "$TUNNEL_PID_FILE"
 
 echo "  等待 tunnel 建立..."
 for i in $(seq 1 15); do
-  URL=$(grep -o 'https://[a-z0-9-]*\.trycloudflare\.com' "$TUNNEL_LOG" 2>/dev/null | head -1)
-  if [ -n "$URL" ]; then break; fi
+  if grep -q "started tunnel" "$TUNNEL_LOG" 2>/dev/null; then break; fi
   sleep 1
 done
 
-if [ -n "$URL" ]; then
+if grep -q "started tunnel" "$TUNNEL_LOG" 2>/dev/null; then
   echo ""
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
   echo "🎉 qclaw 已上线！"
-  echo "   公网地址: $URL"
+  echo "   公网地址: https://$NGROK_DOMAIN"
   echo "   本地地址: http://127.0.0.1:$PORT"
   echo "   停止服务: ./start.sh stop"
   echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 else
-  echo "  ⚠️  tunnel 地址获取超时，查看日志: $TUNNEL_LOG"
+  echo "  ⚠️  tunnel 启动超时，查看日志: $TUNNEL_LOG"
 fi
