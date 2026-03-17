@@ -654,6 +654,51 @@ async function handleApi(req, res) {
     }
   }
 
+  // ── Add / Delete agent APIs ──────────────────────────────────────────────
+  if (req.method === 'POST' && url.pathname === '/api/agents/add') {
+    try {
+      const body = await readBody(req);
+      const { id, model } = body;
+      if (!id || !/^[a-zA-Z0-9_-]+$/.test(id)) return sendError(res, 400, 'id 只允许字母、数字、下划线、横线');
+      if (!model) return sendError(res, 400, 'model 不能为空');
+      const configText = await fs.readFile(openclawConfigPath, 'utf8');
+      const config = JSON.parse(configText);
+      if (!config.agents) config.agents = {};
+      if (!config.agents.list) config.agents.list = [];
+      if (config.agents.list.find((a) => a.id === id)) return sendError(res, 400, `Agent "${id}" 已存在`);
+      const agentDir = path.join(process.env.HOME || '', '.openclaw', 'agents', id, 'agent');
+      const workspace = config.agents.list.find((a) => a.id === 'main')?.workspace
+        || path.join(process.env.HOME || '', '.openclaw', 'workspace');
+      config.agents.list.push({ id, name: id, workspace, agentDir, model });
+      await fs.mkdir(agentDir, { recursive: true });
+      await fs.writeFile(openclawConfigPath, JSON.stringify(config, null, 2), 'utf8');
+      return json(res, 200, { ok: true, message: `Agent "${id}" 已创建` });
+    } catch (error) {
+      return sendError(res, 500, error.message);
+    }
+  }
+
+  if (req.method === 'DELETE' && url.pathname.startsWith('/api/agents/')) {
+    try {
+      const agentId = decodeURIComponent(url.pathname.slice('/api/agents/'.length));
+      if (!agentId || agentId === 'default' || agentId === 'model' || agentId === 'add') {
+        return sendError(res, 400, '无效的 agent id');
+      }
+      if (agentId === 'main') return sendError(res, 400, '不能删除 main agent');
+      const configText = await fs.readFile(openclawConfigPath, 'utf8');
+      const config = JSON.parse(configText);
+      if (!config.agents?.list) return sendError(res, 400, '配置中没有 agents.list');
+      const idx = config.agents.list.findIndex((a) => a.id === agentId);
+      if (idx === -1) return sendError(res, 404, `Agent "${agentId}" 不存在`);
+      config.agents.list.splice(idx, 1);
+      if (config.agents.default === agentId) config.agents.default = 'main';
+      await fs.writeFile(openclawConfigPath, JSON.stringify(config, null, 2), 'utf8');
+      return json(res, 200, { ok: true, message: `Agent "${agentId}" 已删除` });
+    } catch (error) {
+      return sendError(res, 500, error.message);
+    }
+  }
+
   // ── Skills management APIs ───────────────────────────────────────────────
   if (req.method === 'DELETE' && url.pathname.startsWith('/api/skills/')) {
     try {
