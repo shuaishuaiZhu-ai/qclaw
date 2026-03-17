@@ -2,7 +2,7 @@ import { useMemo, useState, useEffect } from 'react';
 import { Trash2, Plus, X } from 'lucide-react';
 import { useAppStore } from '../store/useAppStore';
 
-type AgentInfo = { id: string; model?: string; identityName?: string; identityEmoji?: string };
+type AgentInfo = { id: string; model?: string; identityName?: string; identityEmoji?: string; isDefault?: boolean };
 
 function InstallModal({ onClose, onInstalled }: { onClose: () => void; onInstalled: () => void }) {
   const [name, setName] = useState('');
@@ -83,8 +83,9 @@ export default function Skills() {
   const [unloading, setUnloading] = useState<string | null>(null);
 
   // Agent default management
-  const [agentsConfig, setAgentsConfig] = useState<{ default: string; list: AgentInfo[] } | null>(null);
+  const [agentsConfig, setAgentsConfig] = useState<{ default: string; list: AgentInfo[]; availableModels: string[] } | null>(null);
   const [settingDefault, setSettingDefault] = useState<string | null>(null);
+  const [changingModel, setChangingModel] = useState<string | null>(null);
 
   const fetchAgents = async () => {
     try {
@@ -133,6 +134,24 @@ export default function Skills() {
       alert(`设置失败: ${e.message}`);
     } finally {
       setSettingDefault(null);
+    }
+  };
+
+  const handleChangeModel = async (agentId: string, model: string) => {
+    setChangingModel(agentId);
+    try {
+      const res = await fetch('/api/agents/model', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agentId, model }),
+      });
+      const json = await res.json();
+      if (!json.ok) throw new Error(json.message);
+      await fetchAgents();
+    } catch (e: any) {
+      alert(`切换失败: ${e.message}`);
+    } finally {
+      setChangingModel(null);
     }
   };
 
@@ -222,7 +241,24 @@ export default function Skills() {
                 )}
               </div>
               <p className="text-xs text-slate-400">id: {agent.id}</p>
-              <p className="text-xs text-slate-500 break-all">model: {agent.model || 'unknown'}</p>
+              {/* Model selector */}
+              <div className="space-y-1">
+                <p className="text-[11px] text-slate-500">当前模型</p>
+                <select
+                  value={agent.model || ''}
+                  disabled={changingModel === agent.id}
+                  onChange={(e) => handleChangeModel(agent.id, e.target.value)}
+                  className="w-full px-2 py-1.5 text-xs bg-black/20 border border-white/10 rounded-lg text-slate-200 focus:outline-none focus:border-indigo-500/50 disabled:opacity-50 cursor-pointer"
+                >
+                  {agent.model && !(agentsConfig?.availableModels || []).includes(agent.model) && (
+                    <option value={agent.model}>{agent.model}</option>
+                  )}
+                  {(agentsConfig?.availableModels || []).map((m: string) => (
+                    <option key={m} value={m}>{m}</option>
+                  ))}
+                </select>
+                {changingModel === agent.id && <p className="text-[11px] text-amber-400">切换中...</p>}
+              </div>
             </div>
           ))}
           {displayAgents.length === 0 && (

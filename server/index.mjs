@@ -593,7 +593,42 @@ async function handleApi(req, res) {
       const agentsConfig = config.agents || {};
       const defaultAgent = agentsConfig.default || 'main';
       const list = agentsConfig.list || [];
-      return json(res, 200, { ok: true, data: { default: defaultAgent, list } });
+      // Build available models list from config
+      const defaultModels = config.agents?.defaults?.models || {};
+      const providers = config.models?.providers || {};
+      const availableModels = [];
+      for (const [provider, conf] of Object.entries(providers)) {
+        for (const m of (conf.models || [])) {
+          availableModels.push(`${provider}/${m.id}`);
+        }
+      }
+      // Also add github-copilot models from defaults.models that aren't in providers
+      for (const modelId of Object.keys(defaultModels)) {
+        if (!availableModels.includes(modelId)) availableModels.push(modelId);
+      }
+      return json(res, 200, { ok: true, data: { default: defaultAgent, list, availableModels } });
+    } catch (error) {
+      return sendError(res, 500, error.message);
+    }
+  }
+
+  if (req.method === 'POST' && url.pathname === '/api/agents/model') {
+    try {
+      const body = await readBody(req);
+      const { agentId, model } = body;
+      if (!agentId || !model) return sendError(res, 400, 'agentId 和 model 不能为空');
+      const configText = await fs.readFile(openclawConfigPath, 'utf8');
+      const config = JSON.parse(configText);
+      if (!config.agents?.list) return sendError(res, 400, '配置中没有 agents.list');
+      const agent = config.agents.list.find((a) => a.id === agentId);
+      if (!agent) return sendError(res, 400, `Agent "${agentId}" 不存在`);
+      agent.model = model;
+      // Also update defaults primary model if it's the main agent
+      if (agentId === 'main' && config.agents?.defaults?.model) {
+        config.agents.defaults.model.primary = model;
+      }
+      await fs.writeFile(openclawConfigPath, JSON.stringify(config, null, 2), 'utf8');
+      return json(res, 200, { ok: true, message: `Agent "${agentId}" 模型已更新为 ${model}` });
     } catch (error) {
       return sendError(res, 500, error.message);
     }
